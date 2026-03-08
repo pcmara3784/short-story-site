@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  // Convert .docx → HTML using mammoth
+  // Convert .docx → HTML
   const result = await mammoth.convertToHtml(
     { buffer },
     {
@@ -35,37 +35,49 @@ export async function POST(req: NextRequest) {
     }
   );
 
-  const rawHtml = result.value;
-
-  // Clean up mammoth output:
-  // - Remove empty paragraphs
-  // - Remove any leftover Word cruft
-  const html = rawHtml
+  const html = result.value
     .replace(/<p><\/p>/g, "")
     .replace(/<p>\s*<\/p>/g, "")
     .trim();
+
+  // Extract raw text to reliably pull title and genre from first lines
+  const textResult = await mammoth.extractRawText({ buffer });
+  const lines = textResult.value
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  const title = lines[0] ?? "";
+
+  // Check lines 2–5 for "Genre: X"
+  let genreLabel: string | null = null;
+  for (let i = 1; i < Math.min(lines.length, 5); i++) {
+    const genreMatch = lines[i].match(/^Genre\s*:\s*(.+)$/i);
+    if (genreMatch) {
+      genreLabel = genreMatch[1].trim();
+      break;
+    }
+  }
+
+  const wordCount = textResult.value.trim().split(/\s+/).filter(Boolean).length;
 
   // Archive original .docx to Vercel Blob (only if token is configured)
   let blobUrl: string | null = null;
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     const timestamp = Date.now();
     const safeName = file.name.replace(/[^a-z0-9.\-_]/gi, "-");
-    const { url } = await put(`docx-originals/${timestamp}-${safeName}`, buffer, {
-      access: "public",
-      contentType: file.type,
-    });
+    const { url } = await put(
+      `docx-originals/${timestamp}-${safeName}`,
+      buffer,
+      { access: "public", contentType: file.type }
+    );
     blobUrl = url;
   }
 
-  // Count approximate word count from plain text
-  const textResult = await mammoth.extractRawText({ buffer });
-  const wordCount = textResult.value
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean).length;
-
   return NextResponse.json({
     html,
+    title,
+    genreLabel,
     wordCount,
     blobUrl,
     warnings: result.messages.map((m) => m.message),

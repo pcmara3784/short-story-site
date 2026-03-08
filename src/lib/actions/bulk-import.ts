@@ -8,6 +8,7 @@ export type ImportStoryInput = {
   title: string;
   genreId: string | null; // null = uncategorized
   content: string;
+  published?: boolean;
   duplicateAction?: "skip" | "overwrite";
   existingId?: string;
 };
@@ -53,7 +54,7 @@ export async function bulkImport(stories: ImportStoryInput[]): Promise<{
             title: story.title,
             content: story.content,
             blurb: autoBlurb(story.content),
-            published: false,
+            published: story.published ?? false,
             genres: {
               deleteMany: {},
               ...(story.genreId
@@ -74,7 +75,7 @@ export async function bulkImport(stories: ImportStoryInput[]): Promise<{
           slug,
           blurb: autoBlurb(story.content),
           content: story.content,
-          published: false, // always draft on bulk import — review before publishing
+          published: story.published ?? false,
           ...(story.genreId
             ? { genres: { create: [{ genreId: story.genreId }] } }
             : {}),

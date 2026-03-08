@@ -11,6 +11,7 @@ type StoryRow = ParsedStory & {
   selected: boolean;
   resolvedGenreId: string | null;
   duplicateAction: "skip" | "overwrite";
+  publishOnImport: boolean;
 };
 
 type Props = {
@@ -40,6 +41,7 @@ export default function BulkUploadPreview({ stories, genres, onReset }: Props) {
         selected: s.confidence === "clean" && !s.isDuplicate,
         resolvedGenreId: matchedGenre?.id ?? null,
         duplicateAction: "skip",
+        publishOnImport: true,
       };
     })
   );
@@ -65,6 +67,7 @@ export default function BulkUploadPreview({ stories, genres, onReset }: Props) {
         title: r.title,
         genreId: r.resolvedGenreId,
         content: r.content,
+        published: r.publishOnImport,
         duplicateAction: r.isDuplicate ? r.duplicateAction : undefined,
         existingId: r.existingId,
       }));
@@ -82,7 +85,7 @@ export default function BulkUploadPreview({ stories, genres, onReset }: Props) {
           <p className="text-4xl">✓</p>
           <h2 className="text-xl font-bold text-gray-900">Import complete</h2>
           <div className="text-sm text-gray-600 space-y-1">
-            <p><span className="font-semibold text-green-700">{result.imported}</span> stories imported as drafts</p>
+            <p><span className="font-semibold text-green-700">{result.imported}</span> {result.imported === 1 ? "story" : "stories"} imported</p>
             {result.skipped > 0 && (
               <p><span className="font-semibold text-yellow-700">{result.skipped}</span> duplicates skipped</p>
             )}
@@ -94,7 +97,7 @@ export default function BulkUploadPreview({ stories, genres, onReset }: Props) {
             </div>
           )}
           <p className="text-xs text-gray-400">
-            All imported stories are saved as <strong>drafts</strong>. Review each one, add a proper blurb, and publish when ready.
+            Review each story, add a proper blurb if needed, and adjust publish status from the story list.
           </p>
           <button
             onClick={() => router.push("/admin/stories")}
@@ -241,6 +244,17 @@ export default function BulkUploadPreview({ stories, genres, onReset }: Props) {
                   </div>
                 )}
 
+                {/* Publish toggle */}
+                <label className="flex items-center gap-2 text-xs cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={row.publishOnImport}
+                    onChange={(e) => updateRow(row.tempId, { publishOnImport: e.target.checked })}
+                    className="accent-[var(--color-amber)]"
+                  />
+                  <span className="text-gray-600">Publish immediately</span>
+                </label>
+
                 {/* Excerpt */}
                 <p className="text-xs text-gray-400 italic border-l-2 border-gray-100 pl-2">
                   {row.excerpt || <span className="text-red-400">No content detected</span>}
@@ -261,7 +275,7 @@ export default function BulkUploadPreview({ stories, genres, onReset }: Props) {
           {isPending ? "Importing…" : `Import ${selectedCount} ${selectedCount === 1 ? "story" : "stories"}`}
         </button>
         <p className="text-xs text-gray-400">
-          All stories will be saved as <strong>drafts</strong> — you can review and publish them individually.
+          Use the publish toggle on each story to control visibility.
         </p>
       </div>
     </div>
