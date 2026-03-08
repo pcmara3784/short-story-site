@@ -35,3 +35,9 @@ model StoryGenre {
 
   @@id([storyId, genreId])
 }
+
+model SiteSettings {
+  id       String  @id @default("singleton")
+  bio      String  @db.Text
+  photoUrl String?
+}

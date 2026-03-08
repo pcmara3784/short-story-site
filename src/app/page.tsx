@@ -1,6 +1,14 @@
 import Link from "next/link";
+import { prisma } from "@/lib/prisma";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const settings = await prisma.siteSettings.findUnique({
+    where: { id: "singleton" },
+  });
+
+  const bioParagraphs = settings?.bio
+    ? settings.bio.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
+    : null;
   return (
     <>
       {/* Hero */}
@@ -43,10 +51,19 @@ export default function HomePage() {
       {/* About the Author */}
       <section id="about" className="mx-auto max-w-4xl px-6 py-20">
         <div className="flex flex-col md:flex-row gap-12 items-start">
-          {/* Photo placeholder */}
+          {/* Photo */}
           <div className="flex-shrink-0 mx-auto md:mx-0">
             <div className="w-52 h-52 rounded-full bg-[var(--color-parchment-dark)] border-2 border-[var(--color-border)] flex items-center justify-center overflow-hidden">
-              <span className="text-6xl select-none">📖</span>
+              {settings?.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={settings.photoUrl}
+                  alt="John Mara"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-6xl select-none">📖</span>
+              )}
             </div>
           </div>
 
@@ -56,18 +73,24 @@ export default function HomePage() {
               About the Author
             </h2>
             <div className="space-y-4 text-[var(--color-ink-muted)] leading-relaxed">
-              <p>
-                [This is where your bio goes. Tell your readers a little about yourself —
-                where you&apos;re from, how long you&apos;ve been writing, what draws you to storytelling.
-                Keep it warm and personal, like you&apos;re chatting over coffee.]
-              </p>
-              <p>
-                [You might mention what genres you love to write, what inspires your stories,
-                or a fun fact or two. Readers who connect with the author connect with the work.]
-              </p>
-              <p>
-                [You can update this section anytime through the admin panel — no code required.]
-              </p>
+              {bioParagraphs ? (
+                bioParagraphs.map((p, i) => <p key={i}>{p}</p>)
+              ) : (
+                <>
+                  <p>
+                    [This is where your bio goes. Tell your readers a little about yourself —
+                    where you&apos;re from, how long you&apos;ve been writing, what draws you to storytelling.
+                    Keep it warm and personal, like you&apos;re chatting over coffee.]
+                  </p>
+                  <p>
+                    [You might mention what genres you love to write, what inspires your stories,
+                    or a fun fact or two. Readers who connect with the author connect with the work.]
+                  </p>
+                  <p>
+                    [You can update this section anytime through the admin panel — no code required.]
+                  </p>
+                </>
+              )}
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">

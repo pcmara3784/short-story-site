@@ -41,6 +41,12 @@ export default async function AdminLayout({
               >
                 Genres
               </Link>
+              <Link
+                href="/admin/bio"
+                className="text-sm text-white/70 hover:text-white transition-colors"
+              >
+                Author Bio
+              </Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">
