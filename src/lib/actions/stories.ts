@@ -13,6 +13,9 @@ export async function createStory(formData: FormData) {
   const published = formData.get("published") === "on";
   const genreIds = formData.getAll("genreIds") as string[];
 
+  const max = await prisma.story.aggregate({ _max: { sortOrder: true } });
+  const sortOrder = (max._max.sortOrder ?? -1) + 1;
+
   await prisma.story.create({
     data: {
       title,
@@ -21,6 +24,7 @@ export async function createStory(formData: FormData) {
       content,
       authorNotes: authorNotes || null,
       published,
+      sortOrder,
       genres: {
         create: genreIds.map((genreId) => ({ genreId })),
       },
@@ -74,6 +78,16 @@ export async function togglePublished(id: string, published: boolean) {
     where: { id },
     data: { published: !published },
   });
+  revalidatePath("/stories");
+  revalidatePath("/admin/stories");
+}
+
+export async function reorderStories(orderedIds: string[]) {
+  await Promise.all(
+    orderedIds.map((id, index) =>
+      prisma.story.update({ where: { id }, data: { sortOrder: index } })
+    )
+  );
   revalidatePath("/stories");
   revalidatePath("/admin/stories");
 }

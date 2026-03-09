@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Genre" ADD COLUMN     "sortOrder" INTEGER NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE "Story" ADD COLUMN     "sortOrder" INTEGER NOT NULL DEFAULT 0;

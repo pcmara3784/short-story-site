@@ -27,9 +27,9 @@ export default async function StoriesPage({ searchParams }: Props) {
       include: {
         genres: { include: { genre: true } },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { sortOrder: "asc" },
     }),
-    prisma.genre.findMany({ orderBy: { name: "asc" } }),
+    prisma.genre.findMany({ orderBy: { sortOrder: "asc" } }),
   ]);
 
   return (

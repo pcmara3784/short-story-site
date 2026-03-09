@@ -4,9 +4,10 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const settings = await prisma.siteSettings.findUnique({
-    where: { id: "singleton" },
-  });
+  const [settings, genres] = await Promise.all([
+    prisma.siteSettings.findUnique({ where: { id: "singleton" } }),
+    prisma.genre.findMany({ orderBy: { sortOrder: "asc" } }),
+  ]);
 
   const bioParagraphs = settings?.bio
     ? settings.bio.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
@@ -95,17 +96,19 @@ export default async function HomePage() {
               )}
             </div>
 
-            <div className="mt-8 flex flex-wrap gap-3">
-              {["Fantasy", "Horror", "Humor"].map((genre) => (
-                <Link
-                  key={genre}
-                  href={`/stories?genre=${genre.toLowerCase()}`}
-                  className="inline-block rounded-full bg-[var(--color-amber-pale)] border border-[var(--color-border)] px-4 py-1.5 text-xs font-semibold text-[var(--color-amber)] tracking-wide hover:bg-[var(--color-amber)] hover:text-white transition-colors"
-                >
-                  {genre}
-                </Link>
-              ))}
-            </div>
+            {genres.length > 0 && (
+              <div className="mt-8 flex flex-wrap gap-3">
+                {genres.map((genre) => (
+                  <Link
+                    key={genre.id}
+                    href={`/stories?genre=${genre.slug}`}
+                    className="inline-block rounded-full bg-[var(--color-amber-pale)] border border-[var(--color-border)] px-4 py-1.5 text-xs font-semibold text-[var(--color-amber)] tracking-wide hover:bg-[var(--color-amber)] hover:text-white transition-colors"
+                  >
+                    {genre.name}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>

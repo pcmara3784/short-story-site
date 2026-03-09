@@ -5,7 +5,7 @@ import AdminStoryList from "@/components/admin/AdminStoryList";
 export default async function AdminStoriesPage() {
   const stories = await prisma.story.findMany({
     include: { genres: { include: { genre: true } } },
-    orderBy: { createdAt: "desc" },
+    orderBy: { sortOrder: "asc" },
   });
 
   return (

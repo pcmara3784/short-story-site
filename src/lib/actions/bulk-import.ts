@@ -69,6 +69,8 @@ export async function bulkImport(stories: ImportStoryInput[]): Promise<{
 
       // New story
       const slug = await uniqueSlug(story.title || "untitled");
+      const maxOrder = await prisma.story.aggregate({ _max: { sortOrder: true } });
+      const sortOrder = (maxOrder._max.sortOrder ?? -1) + 1;
       await prisma.story.create({
         data: {
           title: story.title || "Untitled",
@@ -76,6 +78,7 @@ export async function bulkImport(stories: ImportStoryInput[]): Promise<{
           blurb: autoBlurb(story.content),
           content: story.content,
           published: story.published ?? false,
+          sortOrder,
           ...(story.genreId
             ? { genres: { create: [{ genreId: story.genreId }] } }
             : {}),
